@@ -70,7 +70,7 @@ jobs:
           const fs = require("fs");
           const p = "android/app/build.gradle";
           let b = fs.readFileSync(p, "utf8");
-          b = b.replace(/versionCode \d+/, "versionCode 4").replace(/versionName "[^"]*"/, 'versionName "1.2.1"');
+          b = b.replace(/versionCode \d+/, "versionCode 5").replace(/versionName "[^"]*"/, 'versionName "1.2.2"');
           if (!b.includes("signingConfigs.release")) {
             b = b.replace("buildTypes {", "signingConfigs {\n    release {\n      storeFile file('zaemo-release.keystore')\n      storePassword System.getenv('KS_PASS')\n      keyAlias 'zaemo'\n      keyPassword System.getenv('KS_PASS')\n    }\n  }\n  buildTypes {");
             b = b.replace("minifyEnabled false", "minifyEnabled false\n      signingConfig signingConfigs.release");
@@ -90,11 +90,11 @@ jobs:
         with:
           name: ZAEMO-apk
           path: ZAEMO.apk
-      - name: Publish release v1.2.1
+      - name: Publish release v1.2.2
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v1.2.1
-          name: ZAEMO 1.2.1
+          tag_name: v1.2.2
+          name: ZAEMO 1.2.2
           body: ZAEMO Android app (signed). Backup files now save to your Downloads folder. Download ZAEMO.apk and open it on your phone. Installs over the previous 1.2.x version.
           files: ZAEMO.apk
           make_latest: true
