@@ -26,6 +26,8 @@ jobs:
           printf '<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="1254" height="1254" viewBox="0 0 1254 1254"><image width="1254" height="1254" href="data:image/png;base64,%s" xlink:href="data:image/png;base64,%s"/></svg>' "$B" "$B" > icon.svg
           ls -la icon.svg
       - run: node android-setup.mjs
+      - name: Add home-screen widgets
+        run: node widgets.mjs
       - name: Round adaptive icon (no white ring)
         run: |
           node <<'EOF'
@@ -95,7 +97,7 @@ jobs:
           const fs = require("fs");
           const p = "android/app/build.gradle";
           let b = fs.readFileSync(p, "utf8");
-          b = b.replace(/versionCode \d+/, "versionCode 7").replace(/versionName "[^"]*"/, 'versionName "1.2.4"');
+          b = b.replace(/versionCode \d+/, "versionCode 8").replace(/versionName "[^"]*"/, 'versionName "1.3.0"');
           if (!b.includes("signingConfigs.release")) {
             b = b.replace("buildTypes {", "signingConfigs {\n    release {\n      storeFile file('zaemo-release.keystore')\n      storePassword System.getenv('KS_PASS')\n      keyAlias 'zaemo'\n      keyPassword System.getenv('KS_PASS')\n    }\n  }\n  buildTypes {");
             b = b.replace("minifyEnabled false", "minifyEnabled false\n      signingConfig signingConfigs.release");
@@ -115,11 +117,11 @@ jobs:
         with:
           name: ZAEMO-apk
           path: ZAEMO.apk
-      - name: Publish release v1.2.4
+      - name: Publish release v1.3.0
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v1.2.4
-          name: ZAEMO 1.2.4
-          body: ZAEMO Android app (signed). Backup files now save to your Downloads folder. Download ZAEMO.apk and open it on your phone. Installs over the previous 1.2.x version.
+          tag_name: v1.3.0
+          name: ZAEMO 1.3.0
+          body: ZAEMO Android app (signed). Backup files now save to your Downloads folder. Download ZAEMO.apk and open it on your phone. Adds five home-screen widgets (long-press the home screen, Widgets, ZAEMO). Installs over the previous version.
           files: ZAEMO.apk
           make_latest: true
