@@ -26,6 +26,26 @@ jobs:
           printf '<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="1254" height="1254" viewBox="0 0 1254 1254"><image width="1254" height="1254" href="data:image/png;base64,%s" xlink:href="data:image/png;base64,%s"/></svg>' "$B" "$B" > icon.svg
           ls -la icon.svg
       - run: node android-setup.mjs
+      - name: Round adaptive icon (no white ring)
+        run: |
+          node <<'EOF'
+          const fs = require("fs"); const sharp = require("sharp");
+          const A = "android/app/src/main/res";
+          const src = "file_000000007e18821190797053b1df082d.png";
+          (async () => {
+            const S = 432, L = Math.round(S * 0.74);
+            const logo = await sharp(src).resize(L, L).png().toBuffer();
+            const fg = await sharp({ create: { width: S, height: S, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 0 } } }).composite([{ input: logo, left: Math.round((S - L) / 2), top: Math.round((S - L) / 2) }]).png().toBuffer();
+            fs.mkdirSync(A + "/mipmap-xxxhdpi", { recursive: true });
+            fs.writeFileSync(A + "/mipmap-xxxhdpi/ic_launcher_foreground.png", fg);
+            fs.mkdirSync(A + "/values", { recursive: true });
+            fs.writeFileSync(A + "/values/zaemo_icon_bg.xml", '<?xml version="1.0" encoding="utf-8"?><resources><color name="zaemo_icon_bg">#050d0c</color></resources>');
+            fs.mkdirSync(A + "/mipmap-anydpi-v26", { recursive: true });
+            const x = '<?xml version="1.0" encoding="utf-8"?><adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android"><background android:drawable="@color/zaemo_icon_bg"/><foreground android:drawable="@mipmap/ic_launcher_foreground"/></adaptive-icon>';
+            fs.writeFileSync(A + "/mipmap-anydpi-v26/ic_launcher.xml", x);
+            fs.writeFileSync(A + "/mipmap-anydpi-v26/ic_launcher_round.xml", x);
+          })();
+          EOF
       - name: Add save-to-Downloads bridge
         run: |
           node <<'EOF'
@@ -75,7 +95,7 @@ jobs:
           const fs = require("fs");
           const p = "android/app/build.gradle";
           let b = fs.readFileSync(p, "utf8");
-          b = b.replace(/versionCode \d+/, "versionCode 6").replace(/versionName "[^"]*"/, 'versionName "1.2.3"');
+          b = b.replace(/versionCode \d+/, "versionCode 7").replace(/versionName "[^"]*"/, 'versionName "1.2.4"');
           if (!b.includes("signingConfigs.release")) {
             b = b.replace("buildTypes {", "signingConfigs {\n    release {\n      storeFile file('zaemo-release.keystore')\n      storePassword System.getenv('KS_PASS')\n      keyAlias 'zaemo'\n      keyPassword System.getenv('KS_PASS')\n    }\n  }\n  buildTypes {");
             b = b.replace("minifyEnabled false", "minifyEnabled false\n      signingConfig signingConfigs.release");
@@ -95,11 +115,11 @@ jobs:
         with:
           name: ZAEMO-apk
           path: ZAEMO.apk
-      - name: Publish release v1.2.3
+      - name: Publish release v1.2.4
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v1.2.3
-          name: ZAEMO 1.2.3
+          tag_name: v1.2.4
+          name: ZAEMO 1.2.4
           body: ZAEMO Android app (signed). Backup files now save to your Downloads folder. Download ZAEMO.apk and open it on your phone. Installs over the previous 1.2.x version.
           files: ZAEMO.apk
           make_latest: true
