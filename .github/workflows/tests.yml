@@ -1,0 +1,13 @@
+name: Backend regression tests
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '17 3 * * 1'
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20 }
+      - run: node tests/regression.mjs
