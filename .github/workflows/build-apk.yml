@@ -21,6 +21,47 @@ jobs:
       - run: npm run prepare:web
       - run: npx cap add android
       - run: node android-setup.mjs
+      - name: Add save-to-Downloads bridge
+        run: |
+          node <<'EOF'
+          const fs = require("fs");
+          const p = "android/app/src/main/java/com/zaemo/chat/Native.java";
+          let j = fs.readFileSync(p, "utf8");
+          if (!j.includes("saveFile")) {
+            const save = [
+              "  @JavascriptInterface public boolean saveFile(String name, String mime, String text) {",
+              "    try {",
+              "      byte[] data = text.getBytes(java.nio.charset.StandardCharsets.UTF_8);",
+              "      if (android.os.Build.VERSION.SDK_INT >= 29) {",
+              "        android.content.ContentValues v = new android.content.ContentValues();",
+              "        v.put(android.provider.MediaStore.MediaColumns.DISPLAY_NAME, name);",
+              "        v.put(android.provider.MediaStore.MediaColumns.MIME_TYPE, mime);",
+              "        v.put(android.provider.MediaStore.MediaColumns.RELATIVE_PATH, android.os.Environment.DIRECTORY_DOWNLOADS);",
+              "        android.net.Uri u = c.getContentResolver().insert(android.provider.MediaStore.Downloads.EXTERNAL_CONTENT_URI, v);",
+              "        if (u == null) return false;",
+              "        java.io.OutputStream o = c.getContentResolver().openOutputStream(u);",
+              "        o.write(data); o.close();",
+              "        return true;",
+              "      }",
+              "      java.io.File d = android.os.Environment.getExternalStoragePublicDirectory(android.os.Environment.DIRECTORY_DOWNLOADS);",
+              "      d.mkdirs();",
+              "      java.io.FileOutputStream o = new java.io.FileOutputStream(new java.io.File(d, name));",
+              "      o.write(data); o.close();",
+              "      return true;",
+              "    } catch (Exception e) { return false; }",
+              "  }",
+              ""
+            ].join("\n");
+            const i = j.lastIndexOf("}");
+            j = j.slice(0, i) + save + "}\n";
+            fs.writeFileSync(p, j);
+            const mp = "android/app/src/main/AndroidManifest.xml";
+            let m = fs.readFileSync(mp, "utf8");
+            if (!m.includes("WRITE_EXTERNAL_STORAGE")) m = m.replace("</manifest>", '  <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="28" />\n</manifest>');
+            fs.writeFileSync(mp, m);
+          }
+          EOF
+          grep -c saveFile android/app/src/main/java/com/zaemo/chat/Native.java
       - run: npx cap sync android
       - name: Set up permanent release signing
         run: |
@@ -29,10 +70,10 @@ jobs:
           const fs = require("fs");
           const p = "android/app/build.gradle";
           let b = fs.readFileSync(p, "utf8");
-          b = b.replace(/versionCode \d+/, "versionCode 3").replace(/versionName "[^"]*"/, 'versionName "1.2.0"');
+          b = b.replace(/versionCode \d+/, "versionCode 4").replace(/versionName "[^"]*"/, 'versionName "1.2.1"');
           if (!b.includes("signingConfigs.release")) {
-            b = b.replace("buildTypes {", "signingConfigs {\n        release {\n            storeFile file('zaemo-release.keystore')\n            storePassword System.getenv('KS_PASS')\n            keyAlias 'zaemo'\n            keyPassword System.getenv('KS_PASS')\n        }\n    }\n    buildTypes {");
-            b = b.replace("minifyEnabled false", "minifyEnabled false\n            signingConfig signingConfigs.release");
+            b = b.replace("buildTypes {", "signingConfigs {\n    release {\n      storeFile file('zaemo-release.keystore')\n      storePassword System.getenv('KS_PASS')\n      keyAlias 'zaemo'\n      keyPassword System.getenv('KS_PASS')\n    }\n  }\n  buildTypes {");
+            b = b.replace("minifyEnabled false", "minifyEnabled false\n      signingConfig signingConfigs.release");
           }
           fs.writeFileSync(p, b);
           EOF
@@ -49,11 +90,11 @@ jobs:
         with:
           name: ZAEMO-apk
           path: ZAEMO.apk
-      - name: Publish release v1.2.0
+      - name: Publish release v1.2.1
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v1.2.0
-          name: ZAEMO 1.2.0
-          body: ZAEMO Android app (signed). Download ZAEMO.apk and open it on your phone (allow installing from this source). If an older ZAEMO is installed, uninstall it once first; later updates will install over this one.
+          tag_name: v1.2.1
+          name: ZAEMO 1.2.1
+          body: ZAEMO Android app (signed). Backup files now save to your Downloads folder. Download ZAEMO.apk and open it on your phone. Installs over the previous 1.2.x version.
           files: ZAEMO.apk
           make_latest: true
