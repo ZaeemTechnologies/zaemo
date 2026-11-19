@@ -20,6 +20,11 @@ jobs:
       - run: npm install
       - run: npm run prepare:web
       - run: npx cap add android
+      - name: Use new ZAEMO logo as app icon
+        run: |
+          B=$(base64 -w0 file_000000007e18821190797053b1df082d.png)
+          printf '<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="1254" height="1254" viewBox="0 0 1254 1254"><image width="1254" height="1254" href="data:image/png;base64,%s" xlink:href="data:image/png;base64,%s"/></svg>' "$B" "$B" > icon.svg
+          ls -la icon.svg
       - run: node android-setup.mjs
       - name: Add save-to-Downloads bridge
         run: |
@@ -70,7 +75,7 @@ jobs:
           const fs = require("fs");
           const p = "android/app/build.gradle";
           let b = fs.readFileSync(p, "utf8");
-          b = b.replace(/versionCode \d+/, "versionCode 5").replace(/versionName "[^"]*"/, 'versionName "1.2.2"');
+          b = b.replace(/versionCode \d+/, "versionCode 6").replace(/versionName "[^"]*"/, 'versionName "1.2.3"');
           if (!b.includes("signingConfigs.release")) {
             b = b.replace("buildTypes {", "signingConfigs {\n    release {\n      storeFile file('zaemo-release.keystore')\n      storePassword System.getenv('KS_PASS')\n      keyAlias 'zaemo'\n      keyPassword System.getenv('KS_PASS')\n    }\n  }\n  buildTypes {");
             b = b.replace("minifyEnabled false", "minifyEnabled false\n      signingConfig signingConfigs.release");
@@ -90,11 +95,11 @@ jobs:
         with:
           name: ZAEMO-apk
           path: ZAEMO.apk
-      - name: Publish release v1.2.2
+      - name: Publish release v1.2.3
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v1.2.2
-          name: ZAEMO 1.2.2
+          tag_name: v1.2.3
+          name: ZAEMO 1.2.3
           body: ZAEMO Android app (signed). Backup files now save to your Downloads folder. Download ZAEMO.apk and open it on your phone. Installs over the previous 1.2.x version.
           files: ZAEMO.apk
           make_latest: true
