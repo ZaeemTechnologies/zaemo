@@ -6,7 +6,7 @@ const SITE = "https://zaemo.vercel.app/";
 const out = "www";
 fs.rmSync(out, { recursive: true, force: true });
 fs.mkdirSync(out, { recursive: true });
-const files = ["index.html","manifest.webmanifest","icon.svg","main.js","crypto.js","calls.js","data.js",
+const files = ["index.html","manifest.webmanifest","icon.svg","icon-192.png","icon-512.png","main.js","crypto.js","calls.js","data.js",
   "core.js","core_1.js","core_2.js",
   "ui_chat.js","ui_chat_1.js","ui_chat_2.js","ui_chat_3.js","ui_chat_4.js",
   "ui_main.js","ui_main_1.js","ui_main_2.js","ui_main_3.js","ui_main_4.js","ui_main_5.js","ui_main_6.js","native.js","data_1.js","data_2.js","data_3.js","data_4.js",
